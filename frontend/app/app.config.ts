@@ -1,8 +1,11 @@
 export default defineAppConfig({
   ui: {
-    colors: {
-      primary: 'green',
-      neutral: 'slate'
-    }
+    primary: 'black',
+    gray: 'slate'
+  },
+  fonts: {
+    families: [
+      { name: 'Lato', provider: 'google' }
+    ]
   }
 })
