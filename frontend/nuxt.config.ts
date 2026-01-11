@@ -1,5 +1,3 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
-
 export default defineNuxtConfig({
   ssr: false, // Disable server-side rendering (SPA mode)
   static: true,
@@ -9,8 +7,10 @@ export default defineNuxtConfig({
   },
 
   modules: [
-    '@nuxt/eslint'
+    '@nuxt/eslint',
+    '@nuxt/ui'
   ],
+
 
   devtools: {
     enabled: true

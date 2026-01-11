@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "nuxt build",
+    "build": "nuxi generate",
     "dev": "nuxt dev",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -13,11 +13,11 @@
   "dependencies": {
     "@iconify-json/lucide": "^1.2.82",
     "@iconify-json/simple-icons": "^1.2.63",
-    "@iconify/vue": "^5.0.0",
-    "bulma": "^0.9.4",
+    "@nuxt/ui": "^4.3.0",
     "kitsu-client-js": "github:cgwire/kitsu-client-js",
     "kitsu-ui": "github:cgwire/kitsu-ui",
-    "nuxt": "^4.2.2"
+    "nuxt": "^4.2.2",
+    "sass": "^1.97.1"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.12.1",
