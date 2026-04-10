@@ -57,7 +57,7 @@ class Ticket(db.Model, BaseMixin, SerializerMixin):
             "id": str(self.id),
             "title": self.title,
             "text": self.text,
-            "status": str(self.status),
+            "status": self.status.code if self.status else "open",
             "task_id": str(self.task_id) if self.task_id else None,
             "project_id": str(self.project_id) if self.project_id else None,
             "episode_id": str(self.episode_id) if self.episode_id else None,
