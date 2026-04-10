@@ -1,17 +1,10 @@
 <template>
   <UModal
-    :title="$t('tickets.create.modal_title')"
+    :title="isEditMode ? $t('tickets.create.edit_modal_title') : $t('tickets.create.modal_title')"
     :close="{ variant: 'outline' }"
-    v-model="isOpen"
+    :open="isOpen"
+    @update:open="isOpen = $event"
   >
-    <UButton
-      icon="i-lucide-plus"
-      class="cursor-pointer"
-      color="neutral"
-      :label="$t('tickets.create.submit')"
-      variant="subtle"
-    />
-
     <template #body>
       <div class="modal-content">
         <UForm :state="ticket" @submit="handleSubmit" class="ticket-form">
@@ -20,6 +13,7 @@
               v-model="ticket.title"
               :placeholder="$t('tickets.create.title_placeholder')"
               :disabled="isLoading"
+              class="w-full"
             />
           </UFormField>
 
@@ -29,6 +23,7 @@
               :placeholder="$t('tickets.create.description_placeholder')"
               :rows="4"
               :disabled="isLoading"
+              class="w-full"
             />
           </UFormField>
 
@@ -49,14 +44,16 @@
               :placeholder="$t('tickets.create.project_placeholder')"
               :disabled="isLoading"
               :loading="isLoadingProductions"
+              class="w-full"
             />
           </UFormField>
 
-          <UFormField name="task_id" :label="$t('tickets.create.task_id')">
-            <UInput
-              v-model="ticket.task_id"
-              :placeholder="$t('tickets.create.task_id_placeholder')"
+          <UFormField name="task_id" :label="$t('tickets.create.task')">
+            <TaskSelector
+              :project-id="ticket.project_id"
+              :task-id="ticket.task_id"
               :disabled="isLoading"
+              @update:task-id="ticket.task_id = $event"
             />
           </UFormField>
 
@@ -68,12 +65,13 @@
               :placeholder="$t('tickets.create.assignee_placeholder')"
               :disabled="isLoading"
               :loading="isLoadingPeople"
+              class="w-full"
             />
           </UFormField>
 
           <div class="form-actions">
             <UButton type="submit" color="primary" :loading="isLoading">
-              {{ $t('tickets.create.submit') }}
+              {{ isEditMode ? $t('tickets.create.edit_submit') : $t('tickets.create.submit') }}
             </UButton>
           </div>
         </UForm>
@@ -92,6 +90,10 @@ const props = defineProps({
   modelValue: {
     type: Boolean,
     default: false
+  },
+  editTicket: {
+    type: Object,
+    default: null
   },
   productionId: {
     type: String,
@@ -114,12 +116,13 @@ const people = ref([])
 const isLoadingProductions = ref(false)
 const isLoadingPeople = ref(false)
 
+const isEditMode = computed(() => !!props.editTicket)
+
 const isOpen = computed({
   get: () => props.modelValue,
   set: (newValue) => {
     emit('update:modelValue', newValue)
     if (!newValue) {
-      resetForm()
       emit('close')
     }
   }
@@ -130,7 +133,7 @@ const ticket = ref({
   text: '',
   status: 'open',
   project_id: null,
-  task_id: '',
+  task_id: null,
   assignee_id: null
 })
 
@@ -180,24 +183,34 @@ const fetchPeople = async () => {
   }
 }
 
+const fillForm = (data) => {
+  ticket.value = {
+    title: data.title || '',
+    text: data.text || '',
+    status: data.status || 'open',
+    project_id: data.project_id || null,
+    task_id: data.task_id || null,
+    assignee_id: data.assignee_id || null
+  }
+}
+
 const resetForm = () => {
   ticket.value = {
     title: '',
     text: '',
     status: 'open',
     project_id: props.productionId || null,
-    task_id: '',
+    task_id: null,
     assignee_id: null
   }
 }
 
 const handleSubmit = () => {
-  const emptyToNull = (value) => (value && value.trim() ? value.trim() : null)
   const ticketData = {
     title: ticket.value.title || '',
     text: ticket.value.text || '',
     status: ticket.value.status || 'open',
-    task_id: emptyToNull(ticket.value.task_id),
+    task_id: ticket.value.task_id || null,
     assignee_id: ticket.value.assignee_id || null,
     project_id: ticket.value.project_id || null,
     episode_id: props.episodeId || null
@@ -212,7 +225,11 @@ onMounted(() => {
 
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
-    resetForm()
+    if (props.editTicket) {
+      fillForm(props.editTicket)
+    } else {
+      resetForm()
+    }
   }
 })
 

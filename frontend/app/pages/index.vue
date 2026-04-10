@@ -19,12 +19,21 @@
             <span v-if="isStudioPage"> {{ $t('tickets.all_productions') }}</span>
           </p>
         </div>
-        <CreateTicketModal
-          :is-loading="isCreating"
+        <UButton
+          icon="i-lucide-plus"
+          class="cursor-pointer"
+          color="neutral"
+          :label="$t('tickets.create.submit')"
+          variant="subtle"
+          @click="openCreateModal"
+        />
+        <TicketFormModal
+          :is-loading="isSaving"
           :production-id="productionId"
           :episode-id="episodeId"
-          v-model="isCreateModalOpen"
-          @submit="handleCreateTicket"
+          :edit-ticket="editingTicket"
+          v-model="isFormModalOpen"
+          @submit="handleSubmitTicket"
           @close="closeModal"
         />
       </div>
@@ -35,6 +44,7 @@
       :productions="productions"
       :people="people"
       :deleting-ticket-id="deletingTicketId"
+      @edit="handleEditTicket"
       @delete="handleDeleteTicket"
     />
   </div>
@@ -43,15 +53,16 @@
 <script setup>
 const route = useRoute()
 
-const { client, getOpenProductions, getPeople, fetchTickets, createTicket, deleteTicket } = useKitsu()
+const { client, getOpenProductions, getPeople, fetchTickets, createTicket, updateTicket, deleteTicket } = useKitsu()
 
 const isLoggedIn = ref(null)
 const tickets = ref([])
 const productions = ref([])
 const people = ref([])
 const isLoading = ref(true)
-const isCreateModalOpen = ref(false)
-const isCreating = ref(false)
+const isFormModalOpen = ref(false)
+const isSaving = ref(false)
+const editingTicket = ref(null)
 const deletingTicketId = ref(null)
 
 const productionId = computed(() => route.query.production_id)
@@ -63,19 +74,21 @@ onMounted(() => {
 })
 
 const filteredTickets = computed(() => {
-  return tickets.value.filter((ticket) => {
-    if (isStudioPage.value) {
+  return tickets.value
+    .filter((ticket) => {
+      if (isStudioPage.value) {
+        return true
+      } else if (episodeId.value) {
+        return (
+          ticket.project_id === productionId.value
+          && ticket.episode_id === episodeId.value
+        )
+      } else if (productionId.value) {
+        return ticket.project_id === productionId.value
+      }
       return true
-    } else if (episodeId.value) {
-      return (
-        ticket.project_id === productionId.value
-        && ticket.episode_id === episodeId.value
-      )
-    } else if (productionId.value) {
-      return ticket.project_id === productionId.value
-    }
-    return true
-  })
+    })
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 })
 
 const fetchData = async () => {
@@ -99,20 +112,41 @@ const fetchData = async () => {
   }
 }
 
-const handleCreateTicket = async (ticketData) => {
+const handleSubmitTicket = async (ticketData) => {
+  const ticketToEdit = editingTicket.value
   try {
-    isCreating.value = true
-    const createdTicket = await createTicket(ticketData)
-    tickets.value.unshift(createdTicket)
+    isSaving.value = true
+    if (ticketToEdit) {
+      const response = await updateTicket(ticketToEdit.id, ticketData)
+      console.log('updateTicket response:', response)
+      const index = tickets.value.findIndex((t) => t.id === ticketToEdit.id)
+      if (index !== -1) {
+        tickets.value[index] = { ...tickets.value[index], ...ticketData }
+      }
+    } else {
+      const created = await createTicket(ticketData)
+      tickets.value.unshift(created)
+    }
   } catch (error) {
-    console.error('Error creating ticket:', error)
+    console.error('Error saving ticket:', error)
   } finally {
-    isCreating.value = false
+    isSaving.value = false
   }
 }
 
+const openCreateModal = () => {
+  editingTicket.value = null
+  isFormModalOpen.value = true
+}
+
+const handleEditTicket = (ticket) => {
+  editingTicket.value = ticket
+  isFormModalOpen.value = true
+}
+
 const closeModal = () => {
-  isCreateModalOpen.value = false
+  isFormModalOpen.value = false
+  editingTicket.value = null
 }
 
 const handleDeleteTicket = async (ticket) => {

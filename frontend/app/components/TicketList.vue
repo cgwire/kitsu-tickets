@@ -25,12 +25,20 @@
             </UBadge>
             <UButton
               class="cursor-pointer"
+              icon="i-lucide-pencil"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              @click="emit('edit', ticket)"
+            />
+            <UButton
+              class="cursor-pointer"
               icon="i-lucide-trash-2"
               color="red"
               variant="ghost"
               size="xs"
               :loading="props.deletingTicketId === ticket.id"
-              @click="handleDelete(ticket)"
+              @click="confirmDelete(ticket)"
             />
           </div>
         </div>
@@ -100,6 +108,32 @@
     <div class="footer flex items-center">
       <p class="tickets-count text-center">{{ $t('tickets.count', tickets.length) }}</p>
     </div>
+
+    <UModal
+      :title="$t('tickets.delete.confirm_title')"
+      :close="{ variant: 'outline' }"
+      :open="isDeleteModalOpen"
+      @update:open="isDeleteModalOpen = $event"
+    >
+      <template #body>
+        <p>{{ $t('tickets.delete.confirm_message') }}</p>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            color="neutral"
+            variant="subtle"
+            :label="$t('tickets.delete.cancel')"
+            @click="isDeleteModalOpen = false"
+          />
+          <UButton
+            color="red"
+            :label="$t('tickets.delete.confirm')"
+            @click="handleDelete"
+          />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -152,11 +186,22 @@ const personName = (id) => {
   return personMap.value[id] || formatId(id)
 }
 
-const emit = defineEmits(['delete'])
+const emit = defineEmits(['edit', 'delete'])
 
-const handleDelete = (ticket) => {
-  if (!ticket.id) return
-  emit('delete', ticket)
+const isDeleteModalOpen = ref(false)
+const ticketToDelete = ref(null)
+
+const confirmDelete = (ticket) => {
+  ticketToDelete.value = ticket
+  isDeleteModalOpen.value = true
+}
+
+const handleDelete = () => {
+  isDeleteModalOpen.value = false
+  if (ticketToDelete.value) {
+    emit('delete', ticketToDelete.value)
+    ticketToDelete.value = null
+  }
 }
 
 const statusMap = {

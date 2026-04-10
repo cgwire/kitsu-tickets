@@ -24,9 +24,18 @@ export default {
       updated: 'Mis à jour le\u00a0:'
     },
 
+    delete: {
+      confirm_title: 'Supprimer le ticket',
+      confirm_message: 'Êtes-vous sûr de vouloir supprimer ce ticket\u00a0? Cette action est irréversible.',
+      confirm: 'Supprimer',
+      cancel: 'Annuler'
+    },
+
     create: {
       modal_title: 'Créer un nouveau ticket',
       submit: 'Créer le ticket',
+      edit_modal_title: 'Modifier le ticket',
+      edit_submit: 'Enregistrer',
       title: 'Titre',
       title_placeholder: 'Saisir le titre du ticket',
       description: 'Description',
@@ -35,8 +44,21 @@ export default {
       status_placeholder: 'Sélectionner un statut',
       project: 'Production',
       project_placeholder: 'Sélectionner une production',
-      task_id: 'ID de la tâche',
-      task_id_placeholder: 'Saisir l\'ID de la tâche',
+      task: 'Tâche',
+      select_project_first: 'Sélectionner d\'abord une production',
+      entity_type: 'Type d\'entité',
+      entity_type_placeholder: 'Sélectionner le type d\'entité',
+      asset: 'Asset',
+      shot: 'Plan',
+      sequence: 'Séquence',
+      episode: 'Épisode',
+      edit: 'Edit',
+      asset_type: 'Type d\'asset',
+      asset_type_placeholder: 'Sélectionner le type d\'asset',
+      episode_placeholder: 'Sélectionner l\'épisode',
+      sequence_placeholder: 'Sélectionner la séquence',
+      entity_placeholder: 'Sélectionner l\'entité',
+      task_placeholder: 'Sélectionner la tâche',
       assignee: 'Assigné',
       assignee_placeholder: 'Sélectionner un assigné'
     }
