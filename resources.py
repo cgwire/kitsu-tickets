@@ -15,7 +15,7 @@ class TicketCreateSchema(BaseModel):
     title: str
     text: str
     status: Literal["open", "on hold", "closed"] = "open"
-    task_id: UUID
+    task_id: Optional[UUID] = None
     assignee_id: Optional[UUID] = None
     project_id: Optional[UUID] = None
     episode_id: Optional[UUID] = None
