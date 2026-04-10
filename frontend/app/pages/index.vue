@@ -1,138 +1,156 @@
 <template>
-  <div v-if="isLoading">
-    <div class="flex items-center gap-4">
-      <div class="flex items-center gap-2">Loading...</div>
-      <UIcon name="i-lucide-loader-circle" class="animate-spin" />
-      <div class="grid gap-2">
-        <USkeleton class="h-4 w-[250px]" />
-        <USkeleton class="h-4 w-[200px]" />
-        <USkeleton class="h-4 w-[200px]" />
-        <USkeleton class="h-4 w-[200px]" />
-      </div>
-    </div>
+  <div v-if="isLoading" class="loading-state">
+    <UIcon name="i-lucide-loader-circle" class="animate-spin" size="24" />
+    <span>{{ $t('tickets.loading') }}</span>
   </div>
 
-  <div v-else-if="!isLoggedIn">
-    <div class="empty-state">Not logged in</div>
+  <div v-else-if="!isLoggedIn" class="empty-state">
+    <UIcon name="i-lucide-log-in" size="48" />
+    <p class="empty-text">{{ $t('tickets.not_logged_in') }}</p>
   </div>
 
-  <div class="tickets-container" v-else>
-    <p v-if="productionId">Production ID: {{ productionId }}</p>
-    <p v-if="episodeId">Episode ID: {{ episodeId }}</p>
-    <p v-if="isStudioPage">Studio Page</p>
-    <div class="tickets-header flex">
-      <span class="flex-1"></span>
-      <div class="cursor-pointer">
-        <CreateTicketModal
-          ref=""
-          :is-loading="isCreating"
+  <div v-else class="tickets-container">
+    <div class="tickets-header">
+      <div class="header-content">
+        <div>
+          <h1 class="tickets-title">{{ $t('tickets.title') }}</h1>
+          <p class="tickets-count">
+            {{ $t('tickets.count', filteredTickets.length) }}
+            <span v-if="isStudioPage"> {{ $t('tickets.all_productions') }}</span>
+          </p>
+        </div>
+        <UButton
+          icon="i-lucide-plus"
+          class="cursor-pointer"
+          color="neutral"
+          :label="$t('tickets.create.submit')"
+          variant="subtle"
+          @click="openCreateModal"
+        />
+        <TicketFormModal
+          :is-loading="isSaving"
           :production-id="productionId"
           :episode-id="episodeId"
-          @submit="handleCreateTicket"
+          :edit-ticket="editingTicket"
+          v-model="isFormModalOpen"
+          @submit="handleSubmitTicket"
           @close="closeModal"
-          v-model="isCreateModalOpen"
         />
       </div>
     </div>
 
     <TicketList
-      v-if="!isLoading"
       :tickets="filteredTickets"
+      :productions="productions"
+      :people="people"
       :deleting-ticket-id="deletingTicketId"
+      @edit="handleEditTicket"
       @delete="handleDeleteTicket"
     />
   </div>
 </template>
 
 <script setup>
-const route = useRoute();
-const colorMode = useColorMode();
+const route = useRoute()
 
-const { client, fetchTickets, createTicket, deleteTicket } = useKitsu();
+const { client, getOpenProductions, getPeople, fetchTickets, createTicket, updateTicket, deleteTicket } = useKitsu()
 
-const isLoggedIn = ref(null);
-const tickets = ref([]);
-const isLoading = ref(true);
-const isCreateModalOpen = ref(false);
-const isCreating = ref(false);
-const deletingTicketId = ref(null);
+const isLoggedIn = ref(null)
+const tickets = ref([])
+const productions = ref([])
+const people = ref([])
+const isLoading = ref(true)
+const isFormModalOpen = ref(false)
+const isSaving = ref(false)
+const editingTicket = ref(null)
+const deletingTicketId = ref(null)
 
-const productionId = computed(() => route.query.production_id);
-const episodeId = computed(() => route.query.episode_id);
-const isDarkTheme = computed(() => route.query.dark_theme === "true");
-const isStudioPage = computed(() => !productionId.value && !episodeId.value);
-
-colorMode.value = "light";
+const productionId = computed(() => route.query.production_id)
+const episodeId = computed(() => route.query.episode_id)
+const isStudioPage = computed(() => !productionId.value && !episodeId.value)
 
 onMounted(() => {
-  fetchData();
-});
+  fetchData()
+})
 
 const filteredTickets = computed(() => {
-  return tickets.value.filter((ticket) => {
-    if (isStudioPage.value) {
-      return true;
-    } else if (productionId.value) {
-      return ticket.project_id === productionId.value;
-    } else if (episodeId.value) {
-      return (
-        ticket.project_id === productionId.value &&
-        ticket.episode_id === episodeId.value
-      );
-    }
-  });
-});
+  return tickets.value
+    .filter((ticket) => {
+      if (productionId.value) {
+        return ticket.project_id === productionId.value
+      }
+      return true
+    })
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+})
 
 const fetchData = async () => {
   try {
-    isLoading.value = true;
-    const isLoggedInResponse = await client.isLoggedIn();
-    isLoggedIn.value = isLoggedInResponse.isLoggedIn;
-
-    tickets.value = await fetchTickets(productionId.value, episodeId.value);
+    isLoading.value = true
+    const isLoggedInResponse = await client.isLoggedIn()
+    isLoggedIn.value = isLoggedInResponse.isLoggedIn
+    const [ticketsData, productionsData, peopleData] = await Promise.all([
+      fetchTickets(productionId.value, episodeId.value),
+      getOpenProductions(),
+      getPeople()
+    ])
+    tickets.value = ticketsData
+    productions.value = productionsData
+    people.value = peopleData
   } catch (error) {
-    console.error("Error fetching data:", error);
-    tickets.value = [];
+    console.error('Error fetching data:', error)
+    tickets.value = []
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-};
+}
 
-const handleCreateTicket = async (ticketData) => {
+const handleSubmitTicket = async (ticketData) => {
+  const ticketToEdit = editingTicket.value
   try {
-    isCreating.value = true;
-
-    const createdTicket = await createTicket(ticketData);
-    tickets.value.unshift(createdTicket);
+    isSaving.value = true
+    if (ticketToEdit) {
+      const response = await updateTicket(ticketToEdit.id, ticketData)
+      console.log('updateTicket response:', response)
+      const index = tickets.value.findIndex((t) => t.id === ticketToEdit.id)
+      if (index !== -1) {
+        tickets.value[index] = { ...tickets.value[index], ...ticketData }
+      }
+    } else {
+      const created = await createTicket(ticketData)
+      tickets.value.unshift(created)
+    }
   } catch (error) {
-    console.error("Error creating ticket:", error);
-    alert("Failed to create ticket: " + (error.message || "Unknown error"));
-    isCreateModalOpen.value = true;
+    console.error('Error saving ticket:', error)
   } finally {
-    isCreating.value = false;
+    isSaving.value = false
   }
-};
+}
+
+const openCreateModal = () => {
+  editingTicket.value = null
+  isFormModalOpen.value = true
+}
+
+const handleEditTicket = (ticket) => {
+  editingTicket.value = ticket
+  isFormModalOpen.value = true
+}
 
 const closeModal = () => {
-  isCreateModalOpen.value = false;
-};
+  isFormModalOpen.value = false
+  editingTicket.value = null
+}
 
 const handleDeleteTicket = async (ticket) => {
-  if (!ticket.id) {
-    console.error("Ticket ID is missing");
-    return;
-  }
-
-  deletingTicketId.value = ticket.id;
-
+  deletingTicketId.value = ticket.id
   try {
-    await deleteTicket(ticket.id);
-    tickets.value = tickets.value.filter((t) => t.id !== ticket.id);
+    await deleteTicket(ticket.id)
+    tickets.value = tickets.value.filter((t) => t.id !== ticket.id)
   } catch (error) {
-    console.error("Error deleting ticket:", error);
-    alert("Failed to delete ticket: " + (error.message || "Unknown error"));
+    console.error('Error deleting ticket:', error)
   } finally {
-    deletingTicketId.value = null;
+    deletingTicketId.value = null
   }
-};
+}
 </script>

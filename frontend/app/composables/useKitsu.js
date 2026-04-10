@@ -6,18 +6,62 @@ export const useKitsu = () => {
   const apiBaseUrl = "/api"
 
   if (!kitsuClientInstance) {
-    console.log("Creating client", kitsuClient)
     kitsuClientInstance = kitsuClient.createClient(apiBaseUrl)
   }
 
   return {
     client: kitsuClientInstance,
 
-    context: (email, password) => {
-      return kitsuClientInstance.context(email, password)
-    },
     getOpenProductions: () => {
       return kitsuClientInstance.getOpenProductions()
+    },
+
+    getProject: (projectId) => {
+      return kitsuClientInstance.get(`/data/projects/${projectId}`)
+    },
+
+    getPeople: () => {
+      return kitsuClientInstance.get("/data/persons")
+    },
+
+    getAssetTypes: (projectId) => {
+      return kitsuClientInstance.get(`/data/projects/${projectId}/asset-types`)
+    },
+
+    getAssets: (projectId) => {
+      return kitsuClientInstance.get(`/data/projects/${projectId}/assets`)
+    },
+
+    getShots: (projectId) => {
+      return kitsuClientInstance.get(`/data/projects/${projectId}/shots`)
+    },
+
+    getSequences: (projectId) => {
+      return kitsuClientInstance.get(`/data/projects/${projectId}/sequences`)
+    },
+
+    getEpisodes: (projectId) => {
+      return kitsuClientInstance.get(`/data/projects/${projectId}/episodes`)
+    },
+
+    getEdits: (projectId) => {
+      return kitsuClientInstance.get(`/data/projects/${projectId}/edits`)
+    },
+
+    getTaskTypes: (projectId) => {
+      return kitsuClientInstance.get(
+        projectId
+          ? `/data/projects/${projectId}/task-types`
+          : "/data/task-types"
+      )
+    },
+
+    getTasksForEntity: (entityId) => {
+      return kitsuClientInstance.get(`/data/tasks?entity_id=${entityId}`)
+    },
+
+    getTask: (taskId) => {
+      return kitsuClientInstance.get(`/data/tasks/${taskId}`)
     },
 
     fetchTickets: (productionId, episodeId) => {
@@ -35,18 +79,17 @@ export const useKitsu = () => {
       return kitsuClientInstance.post("/plugins/tickets/tickets", ticketData)
     },
 
-    deleteTicket: (ticketId) => {
-      return kitsuClientInstance.delete(`/plugins/tickets/tickets/${ticketId}`)
-    },
-
-    getAssetTypes: (projectId) => {
-      return kitsuClientInstance.get(
-        `/api/data/projects/${projectId}/asset-types`,
+    updateTicket: (ticketId, ticketData) => {
+      return kitsuClientInstance.put(
+        `/plugins/tickets/tickets/${ticketId}`,
+        ticketData
       )
     },
 
-    getAssets: (projectId) => {
-      return kitsuClientInstance.get(`/api/data/projects/${projectId}/assets`)
-    },
+    deleteTicket: (ticketId) => {
+      return kitsuClientInstance.delete(
+        `/plugins/tickets/tickets/${ticketId}`
+      )
+    }
   }
 }
