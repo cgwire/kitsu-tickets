@@ -60,11 +60,14 @@
             />
           </UFormField>
 
-          <UFormField name="assignee_id" :label="$t('tickets.create.assignee_id')">
-            <UInput
+          <UFormField name="assignee_id" :label="$t('tickets.create.assignee')">
+            <USelectMenu
               v-model="ticket.assignee_id"
-              :placeholder="$t('tickets.create.assignee_id_placeholder')"
+              :items="peopleOptions"
+              value-key="value"
+              :placeholder="$t('tickets.create.assignee_placeholder')"
               :disabled="isLoading"
+              :loading="isLoadingPeople"
             />
           </UFormField>
 
@@ -83,7 +86,7 @@
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-const { getOpenProductions } = useKitsu()
+const { getOpenProductions, getPeople } = useKitsu()
 
 const props = defineProps({
   modelValue: {
@@ -107,7 +110,9 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'submit', 'close'])
 
 const productions = ref([])
+const people = ref([])
 const isLoadingProductions = ref(false)
+const isLoadingPeople = ref(false)
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -126,7 +131,7 @@ const ticket = ref({
   status: 'open',
   project_id: null,
   task_id: '',
-  assignee_id: ''
+  assignee_id: null
 })
 
 const statusOptions = computed(() => [
@@ -142,6 +147,15 @@ const productionOptions = computed(() =>
   }))
 )
 
+const peopleOptions = computed(() =>
+  people.value
+    .map((p) => ({
+      label: p.full_name,
+      value: p.id
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+)
+
 const fetchProductions = async () => {
   isLoadingProductions.value = true
   try {
@@ -154,6 +168,18 @@ const fetchProductions = async () => {
   }
 }
 
+const fetchPeople = async () => {
+  isLoadingPeople.value = true
+  try {
+    people.value = await getPeople()
+  } catch (error) {
+    console.error('Error fetching people:', error)
+    people.value = []
+  } finally {
+    isLoadingPeople.value = false
+  }
+}
+
 const resetForm = () => {
   ticket.value = {
     title: '',
@@ -161,7 +187,7 @@ const resetForm = () => {
     status: 'open',
     project_id: props.productionId || null,
     task_id: '',
-    assignee_id: ''
+    assignee_id: null
   }
 }
 
@@ -172,7 +198,7 @@ const handleSubmit = () => {
     text: ticket.value.text || '',
     status: ticket.value.status || 'open',
     task_id: emptyToNull(ticket.value.task_id),
-    assignee_id: emptyToNull(ticket.value.assignee_id),
+    assignee_id: ticket.value.assignee_id || null,
     project_id: ticket.value.project_id || null,
     episode_id: props.episodeId || null
   }
@@ -181,6 +207,7 @@ const handleSubmit = () => {
 
 onMounted(() => {
   fetchProductions()
+  fetchPeople()
 })
 
 watch(() => props.modelValue, (newValue) => {

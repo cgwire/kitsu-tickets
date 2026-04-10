@@ -37,8 +37,8 @@ export default {
       project_placeholder: 'Sélectionner une production',
       task_id: 'ID de la tâche',
       task_id_placeholder: 'Saisir l\'ID de la tâche',
-      assignee_id: 'ID de l\'assigné',
-      assignee_id_placeholder: 'Saisir l\'ID de l\'assigné'
+      assignee: 'Assigné',
+      assignee_placeholder: 'Sélectionner un assigné'
     }
   }
 }

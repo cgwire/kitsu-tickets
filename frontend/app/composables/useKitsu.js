@@ -16,6 +16,10 @@ export const useKitsu = () => {
       return kitsuClientInstance.getOpenProductions()
     },
 
+    getPeople: () => {
+      return kitsuClientInstance.get("/data/persons")
+    },
+
     fetchTickets: (productionId, episodeId) => {
       const query = {}
       if (productionId) {

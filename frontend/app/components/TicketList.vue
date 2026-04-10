@@ -52,14 +52,14 @@
               <UIcon name="i-lucide-user-plus" class="meta-icon" />
               <span class="meta-label">{{ $t('tickets.fields.created_by') }}</span>
               <span class="meta-value">
-                {{ formatId(ticket.person_id) }}
+                {{ personName(ticket.person_id) }}
               </span>
             </span>
             <span v-if="ticket.assignee_id" class="meta-item">
               <UIcon name="i-lucide-user-check" class="meta-icon" />
               <span class="meta-label">{{ $t('tickets.fields.assigned_to') }}</span>
               <span class="meta-value">
-                {{ formatId(ticket.assignee_id) }}
+                {{ personName(ticket.assignee_id) }}
               </span>
             </span>
             <span v-if="ticket.project_id" class="meta-item">
@@ -118,6 +118,10 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  people: {
+    type: Array,
+    default: () => []
+  },
   deletingTicketId: {
     type: String,
     default: null
@@ -132,8 +136,20 @@ const productionMap = computed(() => {
   return map
 })
 
+const personMap = computed(() => {
+  const map = {}
+  for (const p of props.people) {
+    map[p.id] = p.full_name
+  }
+  return map
+})
+
 const productionName = (id) => {
   return productionMap.value[id] || formatId(id)
+}
+
+const personName = (id) => {
+  return personMap.value[id] || formatId(id)
 }
 
 const emit = defineEmits(['delete'])
