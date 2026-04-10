@@ -76,14 +76,7 @@ onMounted(() => {
 const filteredTickets = computed(() => {
   return tickets.value
     .filter((ticket) => {
-      if (isStudioPage.value) {
-        return true
-      } else if (episodeId.value) {
-        return (
-          ticket.project_id === productionId.value
-          && ticket.episode_id === episodeId.value
-        )
-      } else if (productionId.value) {
+      if (productionId.value) {
         return ticket.project_id === productionId.value
       }
       return true
