@@ -2,7 +2,7 @@ from uuid import UUID
 from typing import Optional, Literal
 
 from flask import request
-from flask_restful import Resource
+from flask.views import MethodView
 from flask_jwt_extended import jwt_required
 from pydantic import BaseModel, ValidationError
 
@@ -31,7 +31,7 @@ class TicketUpdateSchema(BaseModel):
     episode_id: Optional[UUID] = None
 
 
-class TicketsResource(Resource, ArgsMixin):
+class TicketsResource(MethodView, ArgsMixin):
 
     @jwt_required()
     def get(self):
@@ -48,7 +48,7 @@ class TicketsResource(Resource, ArgsMixin):
         return ticket.present(), 201
 
 
-class TicketResource(Resource, ArgsMixin):
+class TicketResource(MethodView, ArgsMixin):
 
     @jwt_required()
     def get(self, ticket_id):

@@ -7,7 +7,7 @@ demonstrates all the key parts of the plugin architecture:
 - **manifest.toml** - Plugin metadata, version, and frontend flags.
 - **models.py** - SQLAlchemy models using `db.Model`, `BaseMixin`, and `SerializerMixin`.
 - **services.py** - Business logic separated from resources.
-- **resources.py** - Flask-RESTful endpoints with JWT authentication and Pydantic validation.
+- **resources.py** - Flask MethodView endpoints with JWT authentication and Pydantic validation.
 - **__init__.py** - Route registration and lifecycle hooks.
 - **migrations/** - Alembic database migrations scoped to the plugin's tables.
 - **frontend/** - Nuxt 4 app embedded in Kitsu via iframe.
@@ -44,7 +44,7 @@ tickets/
   __init__.py             # Routes and lifecycle hooks (pre/post install/uninstall)
   models.py               # SQLAlchemy models (db.Model, BaseMixin, SerializerMixin)
   services.py             # Business logic
-  resources.py            # Flask-RESTful endpoints (GET, POST, PUT, DELETE)
+  resources.py            # Flask MethodView endpoints (GET, POST, PUT, DELETE)
   migrations/
     alembic.ini           # Alembic config
     env.py                # Migration env scoped to plugin tables
@@ -108,7 +108,7 @@ the code easier to test and reuse.
 
 ### Resources
 
-Extend `flask_restful.Resource` and `ArgsMixin`. Protect endpoints with
+Extend `flask.views.MethodView` and `ArgsMixin`. Protect endpoints with
 `@jwt_required()`. Use `self.check_id_parameter(uuid)` to validate UUID
 parameters.
 
